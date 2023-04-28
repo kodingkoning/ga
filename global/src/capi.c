@@ -4314,6 +4314,13 @@ void GA_Print_file(FILE *file, int g_a)
   wnga_print_file(file, G_a);
 }
 
+void GA_Print_csv_file(FILE *file, int g_a)
+{
+  Integer G_a = g_a;
+  wnga_print_csv_file(file, G_a);
+}
+
+
 void GA_Diag_seq(int g_a, int g_s, int g_v, void *eval)
 {
     Integer a = (Integer)g_a;

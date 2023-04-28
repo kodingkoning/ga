@@ -822,14 +822,14 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
                             for (i=lop[1]; i<=hip[1]; i++)
                                 fprintf(file," --------");
                             break;
-                       default:
-                         pnga_error("ga_print: wrong type", 0);
+                        default:
+                            pnga_error("ga_print: wrong type", 0);
                     }
-                    
+
                     fprintf(file,"\n");
                     status_2d = 0;
                 }
-                
+
                 switch(type) {
                     case C_INT: pnga_get(g_a, lop, hip, ibuf_2d, ld); break;
                     case C_LONG: pnga_get(g_a, lop, hip,lbuf_2d, ld); break;
@@ -838,9 +838,9 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
                     case C_DCPL: pnga_get(g_a, lop, hip, dcbuf_2d, ld);break;
                     case C_FLOAT: pnga_get(g_a, lop, hip, fbuf_2d, ld);break;
                     case C_SCPL: pnga_get(g_a, lop, hip, fcbuf_2d, ld);break;  
-                   default: pnga_error("ga_print: wrong type",0);
+                    default: pnga_error("ga_print: wrong type",0);
                 }
-                
+
                 for(i=0; i<(hip[0]-lop[0]+1); i++) {
                     fprintf(file,"%4ld  ", (long)(lop[0]+i));
                     switch(type) {
@@ -858,8 +858,8 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
                             break;
                         case C_LONGLONG:
                             if(ndim > 1)
-                               for(j=0; j<(hip[1]-lop[1]+1); j++)
-                                  fprintf(file," %8lld",llbuf_2d[j*bufsize+i]);
+                                for(j=0; j<(hip[1]-lop[1]+1); j++)
+                                    fprintf(file," %8lld",llbuf_2d[j*bufsize+i]);
                             else fprintf(file," %8lld",llbuf_2d[i]);
                             break;
                         case C_DBL:
@@ -896,13 +896,13 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
                                                 dcbuf_2d[(j*bufsize+i)*2+1]);
                             else
                                 if(((double)dcbuf_2d[i*2]<100000.0) &&
-                                   ((double)dcbuf_2d[i*2+1]<100000.0))
+                                        ((double)dcbuf_2d[i*2+1]<100000.0))
                                     fprintf(file," %11.5f,%11.5f",
                                             dcbuf_2d[i*2], dcbuf_2d[i*2+1]);
                                 else
                                     fprintf(file," %.5e,%.5e",
                                             dcbuf_2d[i*2], dcbuf_2d[i*2+1]);
-			    break;
+                            break;
                         case C_SCPL:
                             if(ndim > 1)
                                 for(j=0; j<(hip[1]-lop[1]+1); j++)
@@ -916,42 +916,42 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
                                                 fcbuf_2d[(j*bufsize+i)*2+1]);
                             else
                                 if(((float)fcbuf_2d[i*2]<100000.0) &&
-                                   ((float)fcbuf_2d[i*2+1]<100000.0))
+                                        ((float)fcbuf_2d[i*2+1]<100000.0))
                                     fprintf(file," %11.5f,%11.5f",
                                             fcbuf_2d[i*2], fcbuf_2d[i*2+1]);
                                 else
                                     fprintf(file," %.5e,%.5e",
                                             fcbuf_2d[i*2], fcbuf_2d[i*2+1]);
                             break;
-                       default:
-                          pnga_error("ga_print: wrong data type", 0);
+                        default:
+                            pnga_error("ga_print: wrong data type", 0);
                     }
-                    
+
                     fprintf(file,"\n");
                 }
-                
+
                 lop[0] = hip[0]+1; hip[0] = GA_MIN(lop[0]+bufsize-1, hi[0]);
-                
+
                 for(i=0; i<ndim; i++) {
                     if(lop[i] > hi[i]) {
                         if(i == (ndim-1)) {
                             done = 0;
                         } else {
                             lop[i] = lo[i];
-                            
+
                             if((i == 0) || (i == 1)) {
                                 hip[i] = GA_MIN(lop[i]+bufsize-1, hi[i]);
                             } else {
                                 hip[i] = lo[i];
                             }
-                            
+
                             if(i == 0) {
                                 lop[i+1] = hip[i+1]+1;
                                 hip[i+1] = GA_MIN(lop[i+1]+bufsize-1, hi[i+1]);
                             } else {
                                 lop[i+1]++; hip[i+1]++;
                             }
-                            
+
                             if(i == 0) status_2d = 1;
                             if(i == 1) status_3d = 1;
                         }
@@ -961,7 +961,7 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
         }
         fflush(file);
     }
-    
+
     pnga_sync();
 }
 
@@ -970,7 +970,144 @@ void pnga_print_patch_file(file, g_a, lo, hi, pretty)
 #endif
 void pnga_print_patch(Integer g_a, Integer *lo, Integer *hi, Integer pretty)
 {
-  pnga_print_patch_file(stdout, g_a, lo, hi, pretty);
+    pnga_print_patch_file(stdout, g_a, lo, hi, pretty);
+
+}
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_print_csv_patch_file = pnga_print_csv_patch_file
+#endif
+/*\ PRINT g_a[ilo, jlo]
+ * \*/
+void pnga_print_csv_patch_file(file, g_a, lo, hi, pretty)
+    Integer g_a, *lo, *hi, pretty;
+    FILE *file;
+{
+#define BUFSIZE 6
+#define FLEN 80 
+
+    Integer i, j;
+    Integer type;
+    char *name;
+    Integer ndim, dims[MAXDIM], ld[MAXDIM];
+    Integer bufsize;
+    int ibuf[BUFSIZE], ibuf_2d[BUFSIZE*BUFSIZE];
+    DoublePrecision dbuf[BUFSIZE], dbuf_2d[BUFSIZE*BUFSIZE];
+    DoublePrecision dcbuf[2*BUFSIZE], dcbuf_2d[2*BUFSIZE*BUFSIZE];
+    float fbuf[BUFSIZE], fbuf_2d[BUFSIZE*BUFSIZE];
+    float fcbuf[2*BUFSIZE], fcbuf_2d[3*BUFSIZE*BUFSIZE];
+    Integer lop[MAXDIM], hip[MAXDIM];
+    long lbuf[BUFSIZE], lbuf_2d[BUFSIZE*BUFSIZE];
+    long long llbuf[BUFSIZE], llbuf_2d[BUFSIZE*BUFSIZE];
+    Integer done, status_2d, status_3d;
+    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+    pnga_sync();
+    pnga_check_handle(g_a, "nga_csv_print");
+
+    /* only the first process print the array */
+    if(pnga_nodeid() == 0) {
+
+        pnga_inquire(g_a,  &type, &ndim, dims);
+        pnga_inquire_name(g_a, &name);
+
+        if(ndim != 2) {
+            pnga_error("can only print csv for 2 dimensions ", g_a);
+        }
+
+        /* check the boundary */
+        for(i=0; i<ndim; i++)
+            if(lo[i] <= 0 || hi[i] > dims[i]) 
+                pnga_error("g_a indices out of range ", g_a);
+
+        bufsize = (type==C_DCPL)? BUFSIZE/2 : BUFSIZE;
+        bufsize = (type==C_SCPL)? BUFSIZE/2 : BUFSIZE;
+
+        for(i=0; i<ndim; i++) ld[i] = bufsize;
+
+        done = 1;
+        for(i=0; i<ndim; i++) {
+            lop[i] = lo[i]; hip[i] = lo[i];
+        }
+        hip[0] = GA_MIN(lop[0]+bufsize-1, hi[0]);
+        while(done) {
+            switch(type) {
+                case C_INT:      pnga_get(g_a, lop, hip, ibuf, ld); break;
+                case C_DBL:      pnga_get(g_a, lop, hip, dbuf, ld); break;
+                case C_DCPL:     pnga_get(g_a, lop, hip, dcbuf, ld); break;
+                case C_FLOAT:    pnga_get(g_a, lop, hip, fbuf, ld); break; 
+                case C_SCPL:     pnga_get(g_a, lop, hip, fcbuf, ld); break;
+                case C_LONG:     pnga_get(g_a, lop, hip, lbuf, ld); break; 
+                case C_LONGLONG: pnga_get(g_a, lop, hip, llbuf,ld); break;
+                default: pnga_error("ga_print: wrong type",0);
+            }
+
+            /* print the array */
+            for(i=0; i<(hip[0]-lop[0]+1); i++) {
+                char separator = ',';
+                if((lop[j]+i) % hi[0] == 0) separator = '\n';
+                switch(type) {
+                    case C_INT:
+                        fprintf(file,"%d%c", ibuf[i], separator);break;
+                    case C_LONG:
+                        fprintf(file,"%ld%c", lbuf[i], separator);break;
+                    case C_LONGLONG:
+                        fprintf(file,"%lld%c", llbuf[i], separator);break;
+                    case C_DBL:
+                        if((double)dbuf[i]<100000.0)
+                            fprintf(file,"%f%c", dbuf[i], separator);
+                        else fprintf(file,"%e%c", dbuf[i], separator);
+                        break;
+                    case C_DCPL:
+                        if(((double)dcbuf[i*2]<100000.0) &&
+                                ((double)dcbuf[i*2+1]<100000.0))
+                            fprintf(file,"(%f,%f)%c",
+                                    dcbuf[i*2],dcbuf[i*2+1], separator);
+                        else
+                            fprintf(file,"(%e,%e)%c",
+                                    dcbuf[i*2],dcbuf[i*2+1], separator);
+                        break;
+                    case C_SCPL:
+                        if(((float)fcbuf[i*2]<100000.0) &&
+                                ((float)fcbuf[i*2+1]<100000.0))
+                            fprintf(file,"(%f,%f)%c",
+                                    fcbuf[i*2],fcbuf[i*2+1], separator);
+                        else
+                            fprintf(file,"(%e,%e)%c",
+                                    fcbuf[i*2],fcbuf[i*2+1], separator);
+                        break;
+                    case C_FLOAT: fprintf(file,"%f%c", fbuf[i], separator);break; 
+                }
+            }
+
+            fflush(file);
+
+            lop[0] = hip[0]+1; hip[0] = GA_MIN(lop[0]+bufsize-1, hi[0]);
+
+            for(i=0; i<ndim; i++) {
+                if(lop[i] > hi[i]) {
+                    if(i == (ndim-1)) {
+                        done = 0;
+                    } else {
+                        lop[i] = lo[i];
+                        if(i == 0) hip[i] = GA_MIN(lop[i]+bufsize-1, hi[i]);
+                        else hip[i] = lo[i];
+                        lop[i+1]++; hip[i+1]++;
+                    }
+                }
+            }
+        }
+        fflush(file);
+    }
+
+    pnga_sync();
+}
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_print_csv_patch = pnga_print_csv_patch
+#endif
+void pnga_print_csv_patch(Integer g_a, Integer *lo, Integer *hi, Integer pretty)
+{
+    pnga_print_csv_patch_file(stdout, g_a, lo, hi, pretty);
 
 }
 
@@ -980,7 +1117,7 @@ void pnga_print_patch(Integer g_a, Integer *lo, Integer *hi, Integer pretty)
 void pnga_summarize(Integer verbose)
 {
 #define DEV stdout
-    
+
     Integer i, j, g_a;
     Integer printed, arr_no;
     Integer type, active;
@@ -988,13 +1125,13 @@ void pnga_summarize(Integer verbose)
     Integer ndim, dims[MAXDIM];
     Integer lop[MAXDIM], hip[MAXDIM];
     Integer nproc = pnga_nnodes();
-    
+
     fprintf(DEV, " Summary of allocated global arrays\n");
     fprintf(DEV, "-----------------------------------\n");
 
     printed = 0;
     arr_no = 0;
-    
+
     for(g_a=-1000; g_a<-900; g_a++) {
         active = pnga_verify_handle(g_a);
 
@@ -1002,7 +1139,7 @@ void pnga_summarize(Integer verbose)
             printed = 1;
             pnga_inquire(g_a, &type, &ndim, dims);
             pnga_inquire_name(g_a, &name);
-            
+
             switch(type) {
                 case C_INT:
                     fprintf(DEV, "  array %d => integer ", (int)arr_no);
@@ -1038,7 +1175,7 @@ void pnga_summarize(Integer verbose)
             if(verbose) {
                 for(i=0; i<nproc; i++){
                     pnga_distribution(g_a, i, lop, hip);
-                    
+
                     fprintf(DEV,"    (");
                     for(j=0; j<ndim; j++)
                         if(j != (ndim-1))
@@ -1075,7 +1212,25 @@ void pnga_print_file(FILE *file, Integer g_a)
 
     pnga_print_patch_file(file, g_a, lo, dims, pretty);
 }
-  
+
+
+#if HAVE_SYS_WEAK_ALIAS_PRAGMA
+#   pragma weak wnga_print_csv_file = pnga_print_csv_file
+#endif
+void pnga_print_csv_file(FILE *file, Integer g_a)
+{
+    Integer i;
+    Integer type, ndim, dims[MAXDIM];
+    Integer lo[MAXDIM];
+    Integer pretty = 1;
+
+    pnga_inquire(g_a, &type, &ndim, dims);
+
+    for(i=0; i<ndim; i++) lo[i] = 1;
+
+    pnga_print_csv_patch_file(file, g_a, lo, dims, pretty);
+}
+
 
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_print = pnga_print
@@ -1087,7 +1242,7 @@ void pnga_print(Integer g_a)
 
 
 /*\ return ClusterNode id of the specified process
-\*/
+  \*/
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_cluster_proc_nodeid = pnga_cluster_proc_nodeid
 #endif
@@ -1097,7 +1252,7 @@ Integer pnga_cluster_proc_nodeid(Integer proc)
 }
 
 /*\ return ClusterNode id of the calling process
-\*/
+  \*/
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_cluster_nodeid = pnga_cluster_nodeid
 #endif
@@ -1107,7 +1262,7 @@ Integer pnga_cluster_nodeid()
 }
 
 /*\ number of nodes in a cluster
-\*/
+  \*/
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_cluster_nnodes = pnga_cluster_nnodes
 #endif
@@ -1117,7 +1272,7 @@ Integer pnga_cluster_nnodes()
 }
 
 /*\ number of processes in the job on the specified node
-\*/
+  \*/
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_cluster_nprocs = pnga_cluster_nprocs
 #endif
@@ -1128,7 +1283,7 @@ Integer pnga_cluster_nprocs(Integer node)
 
 
 /*\ global id of corresponding to node and local process ids
-\*/
+  \*/
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_cluster_procid = pnga_cluster_procid
 #endif
@@ -1144,7 +1299,7 @@ Integer pnga_cluster_procid(Integer node, Integer loc_proc_id)
 #  include "tcgmsg.h"
 #endif
 /*\ wrapper for wallclock timer. Returns an alapsed time on calling process
-\*/
+  \*/
 #if HAVE_SYS_WEAK_ALIAS_PRAGMA
 #   pragma weak wnga_wtime = pnga_wtime
 #endif

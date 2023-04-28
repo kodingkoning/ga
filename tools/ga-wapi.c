@@ -1698,6 +1698,16 @@ void wnga_print_file(FILE *file, Integer g_a)
 }
 
 
+void wnga_print_csv_file(FILE *file, Integer g_a)
+{
+   unsigned long long ltme; 
+   ltme=- I_Wtime();
+   pnga_print_csv_file(file, g_a);
+   ltme += I_Wtime();
+   update_local_entry(PNGA_PRINT_CSV_FILE, ltme, 0);    
+}
+
+
 void wnga_print_patch(Integer g_a, Integer *lo, Integer *hi, Integer pretty)
 {
    unsigned long long ltme; 
